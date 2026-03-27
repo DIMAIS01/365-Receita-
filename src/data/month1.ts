@@ -10,6 +10,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê liso e macio.',
     month: 1,
     day: 1,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['A banana é o lanchinho da natureza! 🍌', 'Amassa, amassa para o aviãozinho pousar! ✈️']
   },
@@ -22,6 +23,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Textura de purê bem liso.',
     month: 1,
     day: 2,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Abóbora cor de sol para brilhar! ☀️']
   },
@@ -34,6 +36,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Pastoso e docinho.',
     month: 1,
     day: 3,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Mamão para a barriguinha ficar feliz! 🧡']
   },
@@ -46,6 +49,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê cremoso.',
     month: 1,
     day: 4,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Batata doce é um abraço quentinho! 🤗']
   },
@@ -58,6 +62,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Textura de purê.',
     month: 1,
     day: 5,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Cenoura para olhos de águia! 🦅']
   },
@@ -70,6 +75,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Textura fina e úmida.',
     month: 1,
     day: 6,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Pera refrescante e cheia de água! 🍐']
   },
@@ -82,6 +88,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê bem liso.',
     month: 1,
     day: 7,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Mandioquinha é o preferido de muitos bebês! 💛']
   },
@@ -94,6 +101,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Macia e fácil de engolir.',
     month: 1,
     day: 8,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Maçã cozida é puro carinho! 🍎']
   },
@@ -106,6 +114,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Textura lisa e leve.',
     month: 1,
     day: 9,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Chuchu é leve e hidratante! 🥒']
   },
@@ -118,6 +127,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Cremoso e rico em gorduras boas.',
     month: 1,
     day: 10,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Abacate é o superalimento do bebê! 🥑']
   },
@@ -130,6 +140,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê nutritivo.',
     month: 1,
     day: 11,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Inhame para dar super força! 💪']
   },
@@ -142,6 +153,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Macia e suculenta.',
     month: 1,
     day: 12,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Manga é a rainha das frutas! 🥭']
   },
@@ -154,6 +166,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê clássico e suave.',
     month: 1,
     day: 13,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Batata amassadinha, que delícia! 🥔']
   },
@@ -166,6 +179,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Cremosa e colorida.',
     month: 1,
     day: 14,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Um prato rosa para alegrar o dia! 💖']
   },
@@ -178,6 +192,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Pastosa com fibras.',
     month: 1,
     day: 15,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Mamão e aveia: a dupla dinâmica do intestino! 🦸‍♂️']
   },
@@ -190,6 +205,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê com proteína.',
     month: 1,
     day: 16,
+    category: 'Carne',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Franguinho para crescer forte! 🍗']
   },
@@ -202,6 +218,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê de frutas mistas.',
     month: 1,
     day: 17,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Duas frutas são melhores que uma! 🍌🍐']
   },
@@ -214,6 +231,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê misto saboroso.',
     month: 1,
     day: 18,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Cores e sabores se misturando! 🥕💛']
   },
@@ -226,6 +244,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Pastosa e nutritiva.',
     month: 1,
     day: 19,
+    category: 'Grão',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Lentilha é pequena mas poderosa! 💪']
   },
@@ -238,6 +257,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Cremosa e suave.',
     month: 1,
     day: 20,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Mistura inusitada e deliciosa! 🍎🥑']
   },
@@ -250,6 +270,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê leve com proteína.',
     month: 1,
     day: 21,
+    category: 'Carne',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Refeição completa e leve! 🥒🍗']
   },
@@ -262,6 +283,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê de frutas clássico.',
     month: 1,
     day: 22,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['O café da manhã dos campeões! 🍌🧡']
   },
@@ -274,6 +296,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê bem laranja.',
     month: 1,
     day: 23,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Explosão de vitamina A! 🥕🎃']
   },
@@ -286,6 +309,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê rico em ferro.',
     month: 1,
     day: 24,
+    category: 'Outros',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['A gema é o solzinho no purê! ☀️🥔']
   },
@@ -298,6 +322,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Macia com fibras.',
     month: 1,
     day: 25,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Manga docinha com aveia! 🥭🌾']
   },
@@ -310,6 +335,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê colorido e vibrante.',
     month: 1,
     day: 26,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Cores que encantam os olhos! 💖💛']
   },
@@ -322,6 +348,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Muito cremoso.',
     month: 1,
     day: 27,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Cremosidade em cada colherada! 🍐🥑']
   },
@@ -334,6 +361,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Purê nutritivo com proteína.',
     month: 1,
     day: 28,
+    category: 'Carne',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Energia pura para o bebê! 💪🍗']
   },
@@ -346,6 +374,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Mistura completa e nutritiva.',
     month: 1,
     day: 29,
+    category: 'Outros',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Fruta, legume e cereal: o trio perfeito! 🍌🎃🌾']
   },
@@ -358,6 +387,7 @@ export const month1Recipes: Recipe[] = [
     texture: 'Arco-íris no prato!',
     month: 1,
     day: 30,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Para fechar o primeiro mês com todas as cores! 🌈']
   }

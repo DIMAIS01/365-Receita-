@@ -10,6 +10,7 @@ export const month2Recipes: Recipe[] = [
     texture: 'Amassado mais grosso para estimular a mastigação.',
     month: 2,
     day: 31,
+    category: 'Carne',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Pratinho com batata amassada e franguinho sorridente! 🥔🍗']
   },
@@ -22,6 +23,7 @@ export const month2Recipes: Recipe[] = [
     texture: 'Pedaços macios (BLW).',
     month: 2,
     day: 32,
+    category: 'Legume',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Cenourinhas coloridas com olhos e boquinha felizes! 🥕']
   },
@@ -34,6 +36,7 @@ export const month2Recipes: Recipe[] = [
     texture: 'Cremoso e denso.',
     month: 2,
     day: 33,
+    category: 'Fruta',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Abacate e banana se abraçando em um pratinho! 🥑🍌']
   },
@@ -46,9 +49,11 @@ export const month2Recipes: Recipe[] = [
     texture: 'Textura irregular.',
     month: 2,
     day: 34,
+    category: 'Grão',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Tigelinha com mandioquinha e lentilha com carinhas sorridentes! 💛']
-  },
+  }
+,
   {
     id: '35',
     name: 'Pedacinhos de Manga Madura',

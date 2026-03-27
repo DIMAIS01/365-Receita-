@@ -10,6 +10,7 @@ export const month3Recipes: Recipe[] = [
     texture: 'Amassado com pedacinhos.',
     month: 3,
     day: 61,
+    category: 'Carne',
     videoUrl: 'https://www.w3schools.com/html/mov_bbb.mp4',
     playfulAlerts: ['Arroz, feijão e carne moída sorrindo juntos! 🍚🫘🥩']
   },

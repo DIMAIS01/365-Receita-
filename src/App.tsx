@@ -37,7 +37,13 @@ import {
   Share2,
   Copy,
   Settings,
-  Database
+  Database,
+  Youtube,
+  Gamepad2,
+  Lightbulb,
+  Search,
+  Sparkles,
+  Filter
 } from 'lucide-react';
 import { recipes } from './data';
 import { Recipe, View } from './types';
@@ -55,6 +61,8 @@ export default function App() {
   const [showCheckout, setShowCheckout] = useState(false);
   const [isDevMode, setIsDevMode] = useState(() => localStorage.getItem('isDevMode') === 'true');
   const [logoClickCount, setLogoClickCount] = useState(0);
+  const [updateAvailable, setUpdateAvailable] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
 
   const isDevEnvironment = useMemo(() => {
     return window.location.hostname.includes('-dev-') || window.location.hostname.includes('localhost');
@@ -92,6 +100,17 @@ export default function App() {
   }, []);
 
   useEffect(() => {
+    const handleUpdate = () => setUpdateAvailable(true);
+    const handleUpdating = () => setIsUpdating(true);
+    window.addEventListener('pwa-update-available', handleUpdate);
+    window.addEventListener('pwa-updating', handleUpdating);
+    return () => {
+      window.removeEventListener('pwa-update-available', handleUpdate);
+      window.removeEventListener('pwa-updating', handleUpdating);
+    };
+  }, []);
+
+  useEffect(() => {
     const isStandalone = window.matchMedia('(display-mode: standalone)').matches || (window.navigator as any).standalone;
     if (!isStandalone) {
       const timer = setTimeout(() => setShowInstallPrompt(true), 3000);
@@ -99,10 +118,41 @@ export default function App() {
     }
   }, []);
 
+  const [queueLength, setQueueLength] = useState(0);
+
+  useEffect(() => {
+    GenerationQueue.setOnUpdate(() => setQueueLength(GenerationQueue.getQueueLength()));
+  }, []);
+
+  // Proactive Image Generation: Slowly populate the queue with missing images
+  useEffect(() => {
+    const backgroundPopulate = async () => {
+      // Start with the first month, then the rest
+      const sortedRecipes = [...recipes].sort((a, b) => a.month - b.month || a.day - b.day);
+      for (const recipe of sortedRecipes) {
+        const saved = await ImageStore.get(recipe.name);
+        if (!saved) {
+          GenerationQueue.add(recipe.name);
+          // Don't flood the queue too fast
+          await sleep(500);
+        }
+      }
+    };
+    
+    const timer = setTimeout(backgroundPopulate, 10000);
+    return () => clearTimeout(timer);
+  }, []);
+
   const triggerToast = (message: string, type: 'success' | 'info' = 'info') => {
     setShowToast({ message, type });
     setTimeout(() => setShowToast(null), 3000);
   };
+
+  useEffect(() => {
+    const handleToast = (e: any) => triggerToast(e.detail.message, e.detail.type);
+    window.addEventListener('trigger-toast', handleToast);
+    return () => window.removeEventListener('trigger-toast', handleToast);
+  }, []);
 
   const navigateTo = (view: View, recipe: Recipe | null = null) => {
     setCurrentView(view);
@@ -126,6 +176,64 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-[#f5f5f0] text-[#4a4a40] font-serif selection:bg-[#5A5A40] selection:text-white">
+      {/* Generation Queue Status (Only in Dev Mode) */}
+      {isDevMode && queueLength > 0 && (
+        <div className="fixed bottom-24 left-6 z-50 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-lg border border-[#5A5A40]/10 flex items-center gap-3">
+          <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
+          <div className="text-[10px] font-bold uppercase tracking-widest text-[#5A5A40]">
+            Gerando artes: {queueLength} na fila
+          </div>
+        </div>
+      )}
+
+      {/* PWA Update Notification */}
+      <AnimatePresence>
+        {updateAvailable && (
+          <motion.div 
+            initial={{ y: -100, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            exit={{ y: -100, opacity: 0 }}
+            className="fixed top-20 left-4 right-4 z-[100] md:left-auto md:right-6 md:w-80"
+          >
+            <div className="bg-[#5A5A40] text-white p-4 rounded-2xl shadow-2xl flex flex-col gap-3 border-2 border-white/20">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="bg-white/20 p-2 rounded-xl">
+                    <Download className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm">Atualização Disponível!</h4>
+                    <p className="text-xs opacity-80">Uma nova versão do app está pronta.</p>
+                  </div>
+                </div>
+                {!isUpdating && (
+                  <button onClick={() => setUpdateAvailable(false)} className="opacity-60 hover:opacity-100">
+                    <X className="w-4 h-4" />
+                  </button>
+                )}
+              </div>
+              <button 
+                disabled={isUpdating}
+                onClick={() => {
+                  if ((window as any).updatePWA) (window as any).updatePWA();
+                  else window.location.reload();
+                }}
+                className={`w-full bg-white text-[#5A5A40] py-2 rounded-xl text-xs font-bold hover:bg-white/90 transition-all flex items-center justify-center gap-2 ${isUpdating ? 'opacity-70 cursor-not-allowed' : ''}`}
+              >
+                {isUpdating ? (
+                  <>
+                    <div className="w-3 h-3 border-2 border-[#5A5A40] border-t-transparent rounded-full animate-spin" />
+                    Reiniciando...
+                  </>
+                ) : (
+                  'Atualizar Agora'
+                )}
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Toast Notification */}
       <AnimatePresence>
         {showToast && (
@@ -193,6 +301,7 @@ export default function App() {
             <NavButton active={currentView === 'home'} onClick={() => navigateTo('home')}>Início</NavButton>
             <NavButton active={currentView === 'guidelines'} onClick={() => navigateTo('guidelines')}>Orientações</NavButton>
             <NavButton active={currentView === 'recipes'} onClick={() => navigateTo('recipes')}>Receitas</NavButton>
+            <NavButton active={currentView === 'explore'} onClick={() => navigateTo('explore')}>Explorar</NavButton>
             <NavButton active={currentView === 'pediatrician'} onClick={() => navigateTo('pediatrician')}>Pediatra</NavButton>
             <NavButton active={currentView === 'safety'} onClick={() => navigateTo('safety')}>Segurança</NavButton>
             <NavButton active={currentView === 'pricing'} onClick={() => navigateTo('pricing')}>Premium</NavButton>
@@ -234,6 +343,7 @@ export default function App() {
               <MobileNavButton onClick={() => navigateTo('home')}>Início</MobileNavButton>
               <MobileNavButton onClick={() => navigateTo('guidelines')}>Orientações</MobileNavButton>
               <MobileNavButton onClick={() => navigateTo('recipes')}>Receitas</MobileNavButton>
+              <MobileNavButton onClick={() => navigateTo('explore')}>Explorar</MobileNavButton>
               <MobileNavButton onClick={() => navigateTo('pediatrician')}>Pediatra</MobileNavButton>
               <MobileNavButton onClick={() => navigateTo('safety')}>Segurança</MobileNavButton>
               <MobileNavButton onClick={() => navigateTo('pricing')}>Premium</MobileNavButton>
@@ -246,7 +356,7 @@ export default function App() {
       {/* Main Content */}
       <main className="pt-24 pb-12 px-4 max-w-5xl mx-auto">
         <AnimatePresence mode="wait">
-          {currentView === 'home' && <HomeView onStart={() => navigateTo('guidelines')} />}
+          {currentView === 'home' && <HomeView onStart={() => navigateTo('guidelines')} onExplore={() => navigateTo('explore')} />}
           {currentView === 'guidelines' && <GuidelinesView onNext={() => navigateTo('recipes')} />}
           {currentView === 'recipes' && (
             <RecipesView 
@@ -258,6 +368,7 @@ export default function App() {
                 }
               }} 
               isPremium={isPremium}
+              queueLength={queueLength}
             />
           )}
           {currentView === 'recipe-detail' && selectedRecipe && (
@@ -267,6 +378,7 @@ export default function App() {
               triggerToast={triggerToast}
             />
           )}
+          {currentView === 'explore' && <ExploreView />}
           {currentView === 'pediatrician' && <PediatricianView />}
           {currentView === 'safety' && <SafetyView />}
           {currentView === 'pricing' && (
@@ -319,7 +431,70 @@ export default function App() {
 
 const sleep = (ms: number) => new Promise(resolve => setTimeout(resolve, ms));
 
-async function generateImageWithRetry(prompt: string, model: string = 'gemini-2.5-flash-image', maxRetries = 3) {
+// Global Generation Queue to manage rate limits
+class GenerationQueue {
+  private static queue: string[] = [];
+  private static processing = false;
+  private static onUpdate: (() => void) | null = null;
+
+  static setOnUpdate(cb: () => void) {
+    this.onUpdate = cb;
+  }
+
+  static async add(recipeName: string) {
+    if (this.queue.includes(recipeName)) return;
+    const saved = await ImageStore.get(recipeName);
+    if (saved) return;
+    
+    this.queue.push(recipeName);
+    if (this.onUpdate) this.onUpdate();
+    this.process();
+  }
+
+  static getQueueLength() {
+    return this.queue.length;
+  }
+
+  private static async process() {
+    if (this.processing || this.queue.length === 0) return;
+    this.processing = true;
+
+    while (this.queue.length > 0) {
+      const recipeName = this.queue[0];
+      try {
+        const promptText = `Kawaii chibi style digital illustration for a baby recipe: ${recipeName}. 
+              Composition: A cute teal or pastel colored bowl filled with the food, and right next to it, a cute personified character of the main ingredient (e.g., a smiling pumpkin or carrot). 
+              Both the food in the bowl and the ingredient character must have simple, cute smiling faces with small pink cheeks. 
+              Background: Solid soft pastel yellow. 
+              Style: Thick, clean dark brown outlines. Vibrant flat colors with minimal soft shading. 
+              Text: Include the text 'PAPINHA DE ${recipeName.toUpperCase().replace('PURÊ DE ', '').replace('AMASSADA', '').replace('AMASSADO', '').trim()}' at the top center in a bold, rounded, dark brown font. 
+              Overall feel: Extremely friendly, clean, and professional children's book art.`;
+        
+        const url = await generateImageWithRetry(promptText);
+        await ImageStore.set(recipeName, url);
+        this.queue.shift();
+        if (this.onUpdate) this.onUpdate();
+        // Wait between generations to respect rate limits
+        await sleep(3000);
+      } catch (err: any) {
+        console.error("Queue processing error for", recipeName, err);
+        const isQuotaError = err?.message?.includes('429') || err?.status === 'RESOURCE_EXHAUSTED';
+        if (isQuotaError) {
+          // Wait longer on quota error
+          await sleep(10000);
+        } else {
+          // Skip this one if it's a persistent non-quota error
+          this.queue.shift();
+          if (this.onUpdate) this.onUpdate();
+        }
+      }
+    }
+
+    this.processing = false;
+  }
+}
+
+async function generateImageWithRetry(prompt: string, model: string = 'gemini-2.5-flash-image', maxRetries = 5) {
   let retries = 0;
   const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY });
   
@@ -347,7 +522,7 @@ async function generateImageWithRetry(prompt: string, model: string = 'gemini-2.
       const isQuotaError = err?.message?.includes('429') || err?.status === 'RESOURCE_EXHAUSTED';
       if (isQuotaError && retries < maxRetries - 1) {
         retries++;
-        const delay = Math.pow(2, retries) * 1000 + Math.random() * 1000;
+        const delay = Math.pow(2, retries) * 2000 + Math.random() * 1000;
         console.log(`Quota exceeded. Retrying in ${Math.round(delay)}ms... (Attempt ${retries + 1}/${maxRetries})`);
         await sleep(delay);
         continue;
@@ -386,7 +561,7 @@ function PlayfulIllustration({ prompt, className = "" }: { prompt: string, class
       console.error("Error generating image:", err);
       const isQuotaError = err?.message?.includes('429') || err?.status === 'RESOURCE_EXHAUSTED';
       if (isQuotaError) {
-        alert("Limite de geração atingido. Por favor, aguarde um momento e tente novamente.");
+        window.dispatchEvent(new CustomEvent('trigger-toast', { detail: { message: "Limite de geração atingido. Por favor, aguarde um momento e tente novamente.", type: "info" } }));
       }
       setError(true);
     } finally {
@@ -445,27 +620,41 @@ function PlayfulIllustration({ prompt, className = "" }: { prompt: string, class
 function PlayfulRecipeImage({ recipeName, className = "" }: { recipeName: string, className?: string }) {
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(false);
 
   useEffect(() => {
     const loadSaved = async () => {
       const saved = await ImageStore.get(recipeName);
-      if (saved) setImageUrl(saved);
+      if (saved) {
+        setImageUrl(saved);
+      } else {
+        // Add to queue if missing
+        GenerationQueue.add(recipeName);
+      }
     };
     loadSaved();
+
+    // Listen for queue updates
+    const checkUpdate = async () => {
+      const saved = await ImageStore.get(recipeName);
+      if (saved) setImageUrl(saved);
+    };
+    
+    const interval = setInterval(checkUpdate, 2000);
+    return () => clearInterval(interval);
   }, [recipeName]);
 
   const generateImage = async (e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
+    if (loading) return;
+    
     try {
       setLoading(true);
-      setError(false);
       const promptText = `Kawaii chibi style digital illustration for a baby recipe: ${recipeName}. 
               Composition: A cute teal or pastel colored bowl filled with the food, and right next to it, a cute personified character of the main ingredient (e.g., a smiling pumpkin or carrot). 
               Both the food in the bowl and the ingredient character must have simple, cute smiling faces with small pink cheeks. 
               Background: Solid soft pastel yellow. 
               Style: Thick, clean dark brown outlines. Vibrant flat colors with minimal soft shading. 
-              Text: Include the text '${recipeName.toUpperCase()}' at the top center in a bold, rounded, dark brown font. 
+              Text: Include the text 'PAPINHA DE ${recipeName.toUpperCase().replace('PURÊ DE ', '').replace('AMASSADA', '').replace('AMASSADO', '').trim()}' at the top center in a bold, rounded, dark brown font. 
               Overall feel: Extremely friendly, clean, and professional children's book art.`;
       
       const url = await generateImageWithRetry(promptText);
@@ -473,11 +662,6 @@ function PlayfulRecipeImage({ recipeName, className = "" }: { recipeName: string
       setImageUrl(url);
     } catch (err: any) {
       console.error("Error generating image:", err);
-      const isQuotaError = err?.message?.includes('429') || err?.status === 'RESOURCE_EXHAUSTED';
-      if (isQuotaError) {
-        alert("Limite de geração atingido. Por favor, aguarde um momento e tente novamente.");
-      }
-      setError(true);
     } finally {
       setLoading(false);
     }
@@ -513,21 +697,9 @@ function PlayfulRecipeImage({ recipeName, className = "" }: { recipeName: string
   }
 
   return (
-    <div className="relative group w-full h-full">
-      <img 
-        src={`https://picsum.photos/seed/${recipeName}/800/600`} 
-        alt={recipeName} 
-        className={`w-full h-full object-cover ${className}`}
-        referrerPolicy="no-referrer"
-      />
-      <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-        <button 
-          onClick={generateImage}
-          className="bg-white/90 text-[#5A5A40] px-4 py-2 rounded-full text-[10px] font-bold uppercase tracking-widest shadow-lg hover:scale-105 transition-transform"
-        >
-          Gerar Arte Lúdica
-        </button>
-      </div>
+    <div className={`bg-[#f5f5f0] flex flex-col items-center justify-center ${className}`}>
+      <div className="w-8 h-8 border-2 border-[#5A5A40]/10 border-t-[#5A5A40]/40 rounded-full animate-spin mb-2" />
+      <div className="text-[10px] uppercase font-bold text-[#5A5A40]/40">Na fila...</div>
     </div>
   );
 }
@@ -616,6 +788,27 @@ function DeveloperView({
               </button>
             </div>
 
+            <div className="flex items-center justify-between p-4 bg-[#f5f5f0] rounded-2xl">
+              <div>
+                <div className="font-bold">Ciclo de Vida PWA</div>
+                <div className="text-xs text-[#8e8e7a]">Verificar novas versões manualmente.</div>
+              </div>
+              <button 
+                onClick={() => {
+                  triggerToast('Verificando atualizações...', 'info');
+                  if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistration().then(reg => {
+                      if (reg) reg.update();
+                      else triggerToast('Service Worker não encontrado.', 'info');
+                    });
+                  }
+                }}
+                className="px-4 py-2 bg-[#5A5A40] text-white rounded-xl text-xs font-bold hover:bg-[#4a4a35] transition-all"
+              >
+                Verificar Agora
+              </button>
+            </div>
+
             <div className="p-4 bg-[#f5f5f0] rounded-2xl space-y-4">
               <div className="text-sm font-bold flex items-center gap-2">
                 <Camera className="w-4 h-4" /> Gestão de Artes Lúdicas
@@ -658,11 +851,9 @@ function DeveloperView({
                   Gerar Todas as Artes
                 </button>
                 <button 
-                  onClick={() => {
+                  onClick={async () => {
                     if (confirm("Deseja limpar todas as artes salvas?")) {
-                      Object.keys(localStorage).forEach(k => {
-                        if (k.startsWith('art_')) localStorage.removeItem(k);
-                      });
+                      await ImageStore.clear();
                       window.location.reload();
                     }
                   }}
@@ -735,7 +926,7 @@ function DeveloperView({
   );
 }
 
-function HomeView({ onStart }: { onStart: () => void }) {
+function HomeView({ onStart, onExplore }: { onStart: () => void, onExplore: () => void }) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -769,10 +960,10 @@ function HomeView({ onStart }: { onStart: () => void }) {
             </div>
             <h1 className="text-5xl md:text-8xl font-bold mb-8 leading-[0.9] tracking-tighter">
               365 Dias de <br />
-              <span className="italic font-light opacity-90">Comida de Verdade</span>
+              <span className="italic font-light opacity-90">Papinhas Felizes</span>
             </h1>
             <p className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-12 leading-relaxed font-light">
-              Receitas e orientações práticas para os pais e cuidadores, com base científica sólida e ingredientes acessíveis para o primeiro ano de vida.
+              Receitas lúdicas e nutritivas para os pequenos descobrirem o mundo dos sabores com alegria e saúde.
             </p>
             
             <div className="flex flex-col sm:flex-row items-center justify-center gap-6">
@@ -782,25 +973,13 @@ function HomeView({ onStart }: { onStart: () => void }) {
               >
                 Começar Jornada <ChevronRight className="w-5 h-5" />
               </button>
-              <div className="flex items-center gap-4 text-white/60">
-                <div className="flex -space-x-3">
-                  {[
-                    "bebê feliz comendo papinha",
-                    "mãe e bebê na cozinha",
-                    "bebê descobrindo frutas"
-                  ].map((prompt, i) => (
-                    <div key={i} className="w-12 h-12 rounded-full border-2 border-[#5A5A40] shadow-lg overflow-hidden bg-white">
-                      <PlayfulIllustration 
-                        prompt={prompt} 
-                      />
-                    </div>
-                  ))}
-                </div>
-                <div className="text-left">
-                  <div className="text-sm font-bold text-white">+10k pais</div>
-                  <div className="text-[10px] uppercase tracking-widest">Ajudados hoje</div>
-                </div>
-              </div>
+              
+              <button 
+                onClick={onExplore}
+                className="w-full sm:w-auto bg-white/10 backdrop-blur-md text-white border border-white/20 px-10 py-5 rounded-full text-lg font-bold hover:bg-white/20 transition-all flex items-center justify-center gap-3 shadow-xl hover:scale-105 active:scale-95"
+              >
+                Explorar & Brincar <Sparkles className="w-5 h-5" />
+              </button>
             </div>
           </motion.div>
         </div>
@@ -839,6 +1018,125 @@ function FeatureCard({ icon, title, description }: { icon: React.ReactNode, titl
       <h3 className="text-xl font-bold mb-3">{title}</h3>
       <p className="text-[#8e8e7a] leading-relaxed">{description}</p>
     </div>
+  );
+}
+
+function ExploreView() {
+  const [searchQuery, setSearchQuery] = useState('');
+
+  const curiosities = [
+    "O paladar do bebê é formado nos primeiros 1000 dias.",
+    "Bebês têm mais papilas gustativas que adultos!",
+    "A cor dos alimentos indica diferentes nutrientes.",
+    "O reflexo de protrusão da língua diminui aos 6 meses."
+  ];
+
+  const activities = [
+    { title: "Pintura com Purê", description: "Use purês coloridos como tinta em uma bandeja." },
+    { title: "Caixa Sensorial", description: "Coloque diferentes texturas de alimentos para o bebê tocar." },
+    { title: "Música das Frutas", description: "Cante sobre as cores e sabores enquanto oferece o alimento." }
+  ];
+
+  const handleYoutubeSearch = () => {
+    const query = searchQuery || "introdução alimentar dicas";
+    window.open(`https://www.youtube.com/results?search_query=${encodeURIComponent(query)}`, '_blank');
+  };
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="max-w-4xl mx-auto"
+    >
+      <div className="text-center mb-12">
+        <h2 className="text-4xl font-bold text-[#5A5A40] mb-4">Explorar & Brincar</h2>
+        <p className="text-[#8e8e7a]">Curiosidades, vídeos e brincadeiras para tornar a alimentação divertida.</p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+        {/* YouTube Section */}
+        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-[#5A5A40]/10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-red-50 rounded-2xl text-red-600">
+              <Youtube className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold">Vídeos Educativos</h3>
+          </div>
+          <p className="text-sm text-[#8e8e7a] mb-6">Busque vídeos sobre introdução alimentar e dicas de especialistas.</p>
+          <div className="relative">
+            <input 
+              type="text"
+              placeholder="Ex: Sinais de prontidão..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full p-4 pr-12 bg-[#f5f5f0] rounded-2xl border-none focus:ring-2 focus:ring-[#5A5A40]/20 outline-none"
+            />
+            <button 
+              onClick={handleYoutubeSearch}
+              className="absolute right-2 top-2 p-2 bg-[#5A5A40] text-white rounded-xl hover:bg-[#4A4A30] transition-colors"
+            >
+              <Search className="w-5 h-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* Curiosities Section */}
+        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-[#5A5A40]/10">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-amber-50 rounded-2xl text-amber-600">
+              <Lightbulb className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold">Curiosidades</h3>
+          </div>
+          <div className="space-y-4">
+            {curiosities.map((c, i) => (
+              <div key={i} className="flex gap-3 items-start">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-400 mt-2 flex-shrink-0" />
+                <p className="text-sm text-[#5A5A40] leading-relaxed">{c}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Activities Section */}
+        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-[#5A5A40]/10 md:col-span-2">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-blue-50 rounded-2xl text-blue-600">
+              <Gamepad2 className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold">Brincadeiras Interativas</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            {activities.map((a, i) => (
+              <div key={i} className="p-6 bg-[#f5f5f0] rounded-2xl border border-[#5A5A40]/5">
+                <h4 className="font-bold text-[#5A5A40] mb-2">{a.title}</h4>
+                <p className="text-xs text-[#8e8e7a] leading-relaxed">{a.description}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Quick Orientations Section */}
+        <div className="bg-white p-8 rounded-[32px] shadow-sm border border-[#5A5A40]/10 md:col-span-2">
+          <div className="flex items-center gap-3 mb-6">
+            <div className="p-3 bg-green-50 rounded-2xl text-green-600">
+              <Info className="w-6 h-6" />
+            </div>
+            <h3 className="text-xl font-bold">Orientações Rápidas</h3>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+            <div className="p-4 bg-green-50/30 rounded-2xl">
+              <h4 className="font-bold text-green-800 mb-1 text-sm">Sinais de Prontidão</h4>
+              <p className="text-xs text-green-700 leading-relaxed">Sentar sem apoio, interesse pela comida e diminuição do reflexo de protrusão.</p>
+            </div>
+            <div className="p-4 bg-green-50/30 rounded-2xl">
+              <h4 className="font-bold text-green-800 mb-1 text-sm">Higiene e Segurança</h4>
+              <p className="text-xs text-green-700 leading-relaxed">Lave bem as mãos e os alimentos. Evite distrações (telas) durante a refeição.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
   );
 }
 
@@ -939,12 +1237,19 @@ function GuidelinesView({ onNext }: { onNext: () => void }) {
   );
 }
 
-function RecipesView({ onSelect, isPremium }: { onSelect: (r: Recipe) => void, isPremium: boolean }) {
+function RecipesView({ onSelect, isPremium, queueLength }: { onSelect: (r: Recipe) => void, isPremium: boolean, queueLength: number }) {
   const [activeMonth, setActiveMonth] = useState(1);
+  const [activeCategory, setActiveCategory] = useState<string>('Todos');
+
+  const categories = ['Todos', 'Fruta', 'Legume', 'Carne', 'Grão', 'Outros'];
 
   const filteredRecipes = useMemo(() => {
-    return recipes.filter(r => r.month === activeMonth);
-  }, [activeMonth]);
+    return recipes.filter(r => {
+      const matchesMonth = r.month === activeMonth;
+      const matchesCategory = activeCategory === 'Todos' || r.category === activeCategory;
+      return matchesMonth && matchesCategory;
+    });
+  }, [activeMonth, activeCategory]);
 
   const availableMonths = useMemo(() => {
     const months = new Set(recipes.map(r => r.month));
@@ -957,74 +1262,115 @@ function RecipesView({ onSelect, isPremium }: { onSelect: (r: Recipe) => void, i
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
     >
-      <div className="mb-12 flex flex-col md:flex-row md:items-end justify-between gap-6">
-        <div>
-          <h2 className="text-4xl font-bold mb-2 italic">Receitas</h2>
-          <p className="text-[#8e8e7a]">Selecione o mês para ver as sugestões diárias.</p>
+      <div className="mb-12 flex flex-col gap-8">
+        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+          <div>
+            <h2 className="text-4xl font-bold mb-2 italic">Receitas</h2>
+            <p className="text-[#8e8e7a]">Selecione o mês para ver as sugestões diárias.</p>
+            {queueLength > 0 && (
+              <div className="mt-2 flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest text-[#5A5A40]/60">
+                <div className="w-1.5 h-1.5 bg-[#5A5A40] rounded-full animate-pulse" />
+                Confeccionando artes lúdicas ({queueLength} restantes...)
+              </div>
+            )}
+          </div>
+          
+          <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide">
+            {availableMonths.map(m => (
+              <button
+                key={m}
+                onClick={() => {
+                  setActiveMonth(m);
+                  setActiveCategory('Todos'); // Reset category when changing month
+                }}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
+                  activeMonth === m 
+                  ? 'bg-[#5A5A40] text-white shadow-md' 
+                  : 'bg-white text-[#8e8e7a] hover:bg-[#5A5A40]/5'
+                }`}
+              >
+                {m <= 6 ? `Mês ${m}` : `Fase ${m-6} (1-3a)`}
+              </button>
+            ))}
+          </div>
         </div>
-        
-        <div className="flex overflow-x-auto pb-2 gap-2 scrollbar-hide">
-          {availableMonths.map(m => (
-            <button
-              key={m}
-              onClick={() => setActiveMonth(m)}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-all ${
-                activeMonth === m 
-                ? 'bg-[#5A5A40] text-white shadow-md' 
-                : 'bg-white text-[#8e8e7a] hover:bg-[#5A5A40]/5'
-              }`}
-            >
-              {m <= 6 ? `Mês ${m}` : `Fase ${m-6} (1-3a)`}
-            </button>
-          ))}
+
+        {/* Category Filter */}
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2 text-xs font-bold uppercase tracking-widest text-[#5A5A40]/60">
+            <Filter className="w-3 h-3" />
+            Filtrar por tipo de alimento
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {categories.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all border ${
+                  activeCategory === cat
+                  ? 'bg-[#5A5A40] text-white border-[#5A5A40] shadow-sm'
+                  : 'bg-white text-[#8e8e7a] border-[#5A5A40]/10 hover:border-[#5A5A40]/30'
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {filteredRecipes.map((recipe) => (
-          <motion.div
-            key={recipe.id}
-            layoutId={recipe.id}
-            onClick={() => onSelect(recipe)}
-            className={`bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group border border-[#5A5A40]/5 ${!isPremium && recipe.month > 1 ? 'opacity-75' : ''}`}
-          >
-            <div className="aspect-video bg-[#f5f5f0] relative overflow-hidden">
-              <PlayfulRecipeImage 
-                recipeName={recipe.name} 
-                className="group-hover:scale-105 transition-transform duration-500"
-              />
-              <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-[#5A5A40]">
-                Dia {recipe.day}
-              </div>
-              {!isPremium && recipe.month > 1 && (
-                <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-4 text-center">
-                  <Lock className="w-8 h-8 mb-2" />
-                  <div className="text-xs font-bold uppercase tracking-widest">Plano Premium</div>
+      {filteredRecipes.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredRecipes.map((recipe) => (
+            <motion.div
+              key={recipe.id}
+              layoutId={recipe.id}
+              onClick={() => onSelect(recipe)}
+              className={`bg-white rounded-[24px] overflow-hidden shadow-sm hover:shadow-md transition-all cursor-pointer group border border-[#5A5A40]/5 ${!isPremium && recipe.month > 1 ? 'opacity-75' : ''}`}
+            >
+              <div className="aspect-video bg-[#f5f5f0] relative overflow-hidden">
+                <PlayfulRecipeImage 
+                  recipeName={recipe.name} 
+                  className="group-hover:scale-105 transition-transform duration-500"
+                />
+                <div className="absolute top-4 left-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-[#5A5A40]">
+                  Dia {recipe.day}
                 </div>
-              )}
-              {/* Video overlay removed as per user request */}
-            </div>
-            <div className="p-6">
-              <div className="text-xs font-medium text-[#5A5A40] mb-1 uppercase tracking-wider">{recipe.age}</div>
-              <h3 className="text-xl font-bold mb-4 group-hover:text-[#5A5A40] transition-colors">{recipe.name}</h3>
-              <div className="flex items-center justify-between text-sm text-[#8e8e7a]">
-                <div className="flex items-center gap-1">
-                  <Utensils className="w-4 h-4" />
-                  <span>{recipe.ingredients.length} itens</span>
-                </div>
-                <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                {recipe.category && (
+                  <div className="absolute top-4 right-4 bg-[#5A5A40]/90 backdrop-blur-sm px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest text-white">
+                    {recipe.category}
+                  </div>
+                )}
+                {!isPremium && recipe.month > 1 && (
+                  <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center text-white p-4 text-center">
+                    <Lock className="w-8 h-8 mb-2" />
+                    <div className="text-xs font-bold uppercase tracking-widest">Plano Premium</div>
+                  </div>
+                )}
               </div>
-            </div>
-          </motion.div>
-        ))}
-        
-        {filteredRecipes.length === 0 && (
-          <div className="col-span-full py-20 text-center">
-            <BookOpen className="w-12 h-12 mx-auto mb-4 opacity-20" />
-            <p className="text-[#8e8e7a]">Ainda não há receitas cadastradas para este mês.</p>
+              <div className="p-6">
+                <div className="text-xs font-medium text-[#5A5A40] mb-1 uppercase tracking-wider">{recipe.age}</div>
+                <h3 className="text-xl font-bold mb-4 group-hover:text-[#5A5A40] transition-colors">{recipe.name}</h3>
+                <div className="flex items-center justify-between text-sm text-[#8e8e7a]">
+                  <div className="flex items-center gap-1">
+                    <Utensils className="w-4 h-4" />
+                    <span>{recipe.ingredients.length} itens</span>
+                  </div>
+                  <ChevronRight className="w-5 h-5 opacity-0 group-hover:opacity-100 transition-opacity" />
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center py-20 bg-white rounded-[32px] border border-dashed border-[#5A5A40]/20">
+          <div className="bg-[#f5f5f0] w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4 text-[#5A5A40]/40">
+            <Search className="w-8 h-8" />
           </div>
-        )}
-      </div>
+          <h3 className="text-xl font-bold text-[#5A5A40] mb-2">Nenhuma receita encontrada</h3>
+          <p className="text-[#8e8e7a]">Tente mudar o filtro de categoria ou o mês selecionado.</p>
+        </div>
+      )}
     </motion.div>
   );
 }
@@ -1043,25 +1389,6 @@ function RecipeDetailView({ recipe, onBack, triggerToast }: { recipe: Recipe, on
           className="flex items-center gap-2 text-[#8e8e7a] hover:text-[#5A5A40] transition-colors"
         >
           <ChevronLeft className="w-5 h-5" /> Voltar para lista
-        </button>
-        <button 
-          onClick={() => {
-            const url = `${window.location.origin}?recipe=${recipe.id}`;
-            if (navigator.share) {
-              navigator.share({
-                title: `Receita: ${recipe.name}`,
-                text: `Confira esta receita de ${recipe.name} para bebês de ${recipe.age}!`,
-                url: url
-              });
-            } else {
-              navigator.clipboard.writeText(url);
-              triggerToast('Link da receita copiado!', 'success');
-            }
-          }}
-          className="p-2 bg-white rounded-full shadow-sm border border-[#5A5A40]/10 text-[#5A5A40] hover:scale-110 transition-transform"
-          title="Compartilhar Receita"
-        >
-          <Share2 className="w-5 h-5" />
         </button>
       </div>
 

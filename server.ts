@@ -68,7 +68,22 @@ async function startServer() {
     app.use(vite.middlewares);
   } else {
     const distPath = path.join(process.cwd(), "dist");
-    app.use(express.static(distPath));
+    
+    // Serve static files from dist
+    app.use(express.static(distPath, {
+      setHeaders: (res, filePath) => {
+        if (filePath.endsWith('sw.js')) {
+          res.setHeader('Service-Worker-Allowed', '/');
+          res.setHeader('Content-Type', 'application/javascript');
+        }
+      }
+    }));
+
+    // Specific route for sw.js to ensure it's not caught by *
+    app.get("/sw.js", (req, res) => {
+      res.sendFile(path.join(distPath, "sw.js"));
+    });
+
     app.get("*", (req, res) => {
       res.sendFile(path.join(distPath, "index.html"));
     });

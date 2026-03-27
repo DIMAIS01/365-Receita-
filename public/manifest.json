@@ -1,0 +1,23 @@
+{
+  "name": "365 Dias de Comida de Verdade",
+  "short_name": "365 Dias",
+  "description": "Guia completo de introdução alimentar saudável para bebês com 365 receitas lúdicas.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f5f0",
+  "theme_color": "#5A5A40",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "192x192",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.svg",
+      "sizes": "512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

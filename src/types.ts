@@ -7,6 +7,7 @@ export interface Recipe {
   texture: string;
   month: number;
   day: number;
+  category?: 'Fruta' | 'Legume' | 'Carne' | 'Grão' | 'Outros';
   videoUrl?: string;
   playfulAlerts?: string[];
 }
@@ -17,4 +18,4 @@ export interface Month {
   recipes: Recipe[];
 }
 
-export type View = 'home' | 'guidelines' | 'recipes' | 'pricing' | 'recipe-detail' | 'pediatrician' | 'safety' | 'developer';
+export type View = 'home' | 'guidelines' | 'recipes' | 'pricing' | 'recipe-detail' | 'pediatrician' | 'safety' | 'developer' | 'explore';
